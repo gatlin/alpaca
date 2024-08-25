@@ -15,7 +15,7 @@ import type { ChatResponse } from "ollama";
         (async () => {
           messages.push({ role: "user", content: query });
           await fs.appendFile("./out", `> ${query}`);
-          return queryModel(ollama, "llama3.1", messages);
+          return ollama.chat({ model: "llama3.1", messages, stream: true });
         })()
       )
     ),
@@ -36,25 +36,6 @@ async function openInput(): Promise<Observable<string>> {
   return shift((k) =>
     inFile.createReadStream().on("data", (d) => k(d.toString()))
   );
-}
-
-/**
- * Queries an Ollama server and sends back an async iterable of responses.
- * @param ollama - The Ollama API client.
- * @param model - The model to use with our query.
- * @param content - The actual message we are sending the model.
- * @returns A promise of an async iterable of {@link ChatResponse} values.
- */
-function queryModel(
-  ollama: Ollama,
-  model: string,
-  messages: { role: string; content: string }[]
-): Promise<AsyncIterable<ChatResponse>> {
-  return ollama.chat({
-    model,
-    messages,
-    stream: true,
-  });
 }
 
 /**
