@@ -3,7 +3,6 @@ import { shift, then, keep, map } from "torc";
 import { pipe } from "ts-functional-pipe";
 import fs from "node:fs/promises";
 import { Ollama } from "ollama";
-import type { ChatResponse } from "ollama";
 
 (async function main() {
   const [host = "http://exodus:11434"] = process.argv.slice(2);
