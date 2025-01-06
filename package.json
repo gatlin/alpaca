@@ -15,13 +15,13 @@
   "dependencies": {
     "ollama": "^0.5.8",
     "torc": "github:gatlin/torc",
-    "ts-functional-pipe": "^3.1.2",
-    "typescript": "^5.5.4"
+    "ts-functional-pipe": "^3.1.2"
   },
   "devDependencies": {
-    "@types/node": "^22.5.0",
+    "@types/node": "^22.10.1",
     "rimraf": "^6.0.1",
-    "tsc": "^2.0.4"
+    "type-mapping": "1.28",
+    "typescript": "^5.7.2"
   },
   "bin": {
     "alpaca": "./dist/esm/index.js"

@@ -1,28 +1,28 @@
 import type { Observable } from "torc";
 import { shift, then, keep, map } from "torc";
 import { pipe } from "ts-functional-pipe";
-import fs from "node:fs/promises";
+import * as fs from "node:fs/promises";
 import { Ollama } from "ollama";
 
 (async function main() {
-  const [host = "http://exodus:11434"] = process.argv.slice(2);
-  const ollama = new Ollama({ host });
-  const messages: { role: string; content: string }[] = [];
+  const { host, model, port, inFile, outFile } = gatherOptions();
+  const ollama = new Ollama({ host: `http://${host}:${port}` });
+  const messages: { role: "user" | "assistant"; content: string }[] = [];
   void pipe(
-    then((query: string) =>
+    then((content: string) =>
       keep(
         (async () => {
-          messages.push({ role: "user", content: query });
-          await fs.appendFile("./out", `> ${query}`);
-          return ollama.chat({ model: "llama3.1", messages, stream: true });
+          messages.push({ role: "user", content });
+          await fs.appendFile(outFile, `> ${content}`);
+          return ollama.chat({ model, messages, stream: true });
         })()
       )
     ),
     then(collect),
     map((lines) => lines.map((l) => l.message.content).join(""))
-  )(await openInput()).subscribe((content) => {
+  )(await openInput(inFile)).subscribe((content) => {
     messages.push({ role: "assistant", content });
-    fs.appendFile("./out", `< ${content}\n`);
+    fs.appendFile(outFile, `< ${content}\n`);
   });
 })();
 
@@ -30,8 +30,8 @@ import { Ollama } from "ollama";
  * Opens the input pipe and returns an observable of the lines written to it.
  * @returns A promise of an observable of lines written to the input pipe.
  */
-async function openInput(): Promise<Observable<string>> {
-  const inFile = await fs.open("./in", "r+");
+async function openInput(inPath: string): Promise<Observable<string>> {
+  const inFile = await fs.open(inPath, "r+");
   return shift((k) =>
     inFile.createReadStream().on("data", (d) => k(d.toString()))
   );
@@ -50,4 +50,32 @@ function collect<A>(it: Iterable<A> | AsyncIterable<A>): Observable<A[]> {
     for await (const part of it) parts.push(part);
     k(parts);
   });
+}
+
+type AlpacaOptions = {
+  host: string;
+  port: number;
+  model: string;
+  inFile: string;
+  outFile: string;
+  debug: boolean;
+};
+
+function defaultOptions(): AlpacaOptions {
+  return {
+    host: "127.0.0.1",
+    port: 11434,
+    model: "llama3.2",
+    inFile: "./in",
+    outFile: "./out",
+    debug: false,
+  };
+}
+
+function gatherOptions(): AlpacaOptions {
+  const options: AlpacaOptions = defaultOptions();
+  console.log(process.argv);
+  // process flags correctly here
+  console.log("Alpaca options", options);
+  return options;
 }
